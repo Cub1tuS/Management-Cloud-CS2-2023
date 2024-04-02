@@ -74,19 +74,6 @@ rocky-pkg              (vmware_desktop, 0)
 
 # IV. Multi VM
 
-Il est -évidemment- possible de créer plusieurs VMs à l'aide d'un seul `Vagrantfile` et donc de une seule commande `vagrant up`.
-
-Il y a deux façons de faire ça dans le `Vagrantfile` :
-
-- on duplique tout le bloc qui permet de lancer une VM
-  - à l'aide des mots-clés `config.vm.define`
-  - c'est bourrin un peu, mais ça permet de gérer tous les cas
-- on fait une boucle, qui, à chaque itération, crée une VM
-  - élégant, et on peut faire des trucs genre attribuer une IP qui s'incrémente à chaque itération de la boucle
-  - mais on peut pas tout faire parfois
-
-Idem ici, vous choisissez la méthode que vous voulez, go internet pour la syntaxe.
-
 🌞 **Un deuxième `Vagrantfile` qui définit** :
 
 - une VM `node1.tp1.efrei`
@@ -96,7 +83,37 @@ Idem ici, vous choisissez la méthode que vous voulez, go internet pour la synta
   - IP `10.1.1.102/24`
   - 1G de RAM
 
+ - [multivm-conf-vagrant](./multivm-conf-vagrant)
+
+```bash
+dorian@Air-de-Dorian cloud % vagrant status 
+Current machine states:
+
+node1                     running (vmware_desktop)
+node2                     running (vmware_desktop)
+
+This environment represents multiple VMs. The VMs are all listed
+above with their current state. For more information about a specific
+VM, run `vagrant status NAME`.
+```
+
 🌞 **Une fois les VMs allumées, assurez-vous que vous pouvez ping `10.1.1.102` depuis `node1`**
+
+```bash
+dorian@Air-de-Dorian cloud % vagrant ssh node1
+
+This system is built by the Bento project by Chef Software
+More information can be found at https://github.com/chef/bento
+Last login: Tue Apr  2 16:47:50 2024 from 172.16.74.1
+[vagrant@localhost ~]$ ping 10.1.1.102
+PING 10.1.1.102 (10.1.1.102) 56(84) bytes of data.
+64 bytes from 10.1.1.102: icmp_seq=1 ttl=64 time=1.11 ms
+64 bytes from 10.1.1.102: icmp_seq=2 ttl=64 time=0.477 ms
+^C
+--- 10.1.1.102 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1002ms
+rtt min/avg/max/mdev = 0.477/0.793/1.110/0.316 ms
+```
 
 # V. cloud-init
 
