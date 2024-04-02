@@ -1,27 +1,8 @@
 # TP1 : Programmatic provisioning
-
-**Le terme *provisioning* correspond simplement au fait de créer des machines virtuelles, et leur appliquer une configuration basique.**
-
-> *Derrière le terme de *provisioning* peuvent se cacher, suivant le contexte oui l'interlocuteur, quelques subtilités.*
-
-On parle donc de *VM provisioning*, ou *infrastructure provisioning* : on réserve des ressources afin d'y exécuter des VMs.
-
-**Dans le monde du cloud, on utilise des approches programmatiques pour gérer le provisioning.**  
-C'est à dire qu'on écrit du code, et les VMs sont créées à l'exécution de notre code.
-
-> Plutôt que de faire des clics clics, on écrit du code. **On parle d'infrastructure as code ou IaC.**
-
-**Pour vous faire prendre en main un outil pratique, et commencer à mettre les mains dans l'infrastructure as code, on va jouer avec Vagrant dans ce TP.**
-
-Vagrant permet de piloter, via du code, un hyperviseur local comme VirtualBox ou Hyper-V.
-
-> Nous passerons sûrement sur Terraform + Azure dans un deuxième temps. Le principe reste exactement le même.
-
 ## Sommaire
 
 - [TP1 : Programmatic provisioning](#tp1--programmatic-provisioning)
   - [Sommaire](#sommaire)
-- [0. Setup](#0-setup)
 - [I. Une première VM](#i-une-première-vm)
   - [1. ez startup](#1-ez-startup)
   - [2. Un peu de conf](#2-un-peu-de-conf)
@@ -30,76 +11,24 @@ Vagrant permet de piloter, via du code, un hyperviseur local comme VirtualBox ou
 - [IV. Multi VM](#iv-multi-vm)
 - [V. cloud-init](#v-cloud-init)
 
-# 0. Setup
 
-➜ **[VirtualBox](https://www.virtualbox.org/)**
-
-Pour ce TP, pour ce qui est de l'hyperviseur local, je vous recommande d'utiliser VirtualBox comme hyperviseur (opensource et cross-platform).  
-Vagrant supporte aussi VMWare Workstation et Microsoft Hyper-V, vous êtes libres de les utiliser.
-
-➜ **[Vagrant](https://www.vagrantup.com/)**
-
-Il faudra télécharger Vagrant sur votre poste, afin de piloter votre hyperviseur local.
 
 # I. Une première VM
 
 ## 1. ez startup
 
-> Vagrant s'utilise depuis un terminal sur votre poste. Je vous recommande Git Bash (et pas Powershell, pour une fois) si vous êtes sur Windows.
-
-Dans ce TP, vous êtes complètement libres du choix de l'OS, mais si vous voulez que tout roule, vous pouvez juste rester avec les images que je recommande.
-
-Pour cette première VM, on va lancer un Rocky 9 (basé sur RHEL, avec sécurité et robustessee en tête).
-
-➜ **Préparons le terrain pour la première VM**
-
-```bash
-# déplacez-vous dans un répertoire de travail
-$ mkdir /path/to/workdir
-$ cd /path/to/workdir
-
-# générez un fichier Vagrantfile initial
-$ vagrant init generic/rocky9
-
-# un fichier Vagrantfile a été créé dans le dossier courant
-# explorez son contenu, c'est quasiment que des commentaires quand on le génère comme ça
-$ cat Vagrantfile
-```
-
-Avec ce fichier basique, il est possible d'allumer une simple VM. On peut trouver en commentaires les lignes de conf souvent utilisées (mais ce n'est pas exhaustif). Comme par exemple la configuration d'une IP statique sur une machine.
-
-Une fois vous avez un peu lu, **SUPPRIMEZ TOUS LES COMMENTAIRES** svpliz pour voir clair dans votre fichier.
-
----
-
-Pour le moment, la conf, on s'en branle, on va juste allumer la VM ! Komsa :
-
-```bash
-# on allume la VM
-# ça marche que si on est dans un dossier qui contient un Vagrantfile
-$ vagrant up
-
-# voir le statut de la VM
-$ vagrant status
-
-# une fois terminé, on peut SSH vers notre VM facilement avec :
-$ vagrant ssh
-
-# si vous voulez voir les paramètres de la commande SSH effectuée par Vagrant vous pouvez utiliser
-$ vagrant ssh-config
-
-# enfin vous pouvez éteindre et détruire la VM avec
-$ vagrant halt
-$ vagrant destroy -f # -f permet de détruire même si on a pas éteint (halt) la VM avant
-```
-
-➜ *Vous pouvez aussi constater que la VM est allumée dans votre hyperviseur.*
-
 🌞 **`Vagrantfile` dans le dépôt git de rendu SVP !**
+
+```bash
+dorian@Air-de-Dorian cloud % cat Vagrantfile 
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/rockylinux-9-arm64"
+end
+```
 
 > **Y'aura plusieurs Vagrantfile dans le TP**, alors hésitez pas à les renommer dans le rendu, faire des dossiers, toussa, clean quoi !
 
-![Vagrant up](./img/vagrant.png)
+![Vagrantfile](./basic-conf-vagrant)
 
 ## 2. Un peu de conf
 
