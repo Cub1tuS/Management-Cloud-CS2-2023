@@ -30,70 +30,47 @@ end
 
 ## 2. Un peu de conf
 
-Avec Vagrant, il est possible de gérer un certains nombres de paramètres de la VM.
-
 🌞 **Ajustez le `Vagrantfile` pour que la VM créée** :
 
-- ait l'IP `10.1.1.11/24`
-- porte le hostname `ezconf.tp1.efrei`
-- porte le nom (pour Vagrant) `ezconf.tp1.efrei` (ce n'est pas le hostname de la machine)
-- ait 2G de RAM
-- ait un disque dur de 20G
+```bash
+dorian@Air-de-Dorian cloud % cat Vagrantfile 
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/rockylinux-9-arm64"
+  config.vm.network "private_network", ip: "10.1.1.11", netmask: "255.255.255.0"
+  config.vm.hostname = "ezconf.tp1.efrei"
+  config.vm.provider "vmware_desktop" do |v|
+    v.vmx["memsize"] = "2048"
+    v.vmx["name"] = "ezconf.tp1.efrei"
+    # Impossible d'allouer une taille spécifique de disque sur fusion 🙃
+  end
+end
+```
 
-Je vous laisse vous aventurer sur le grand internet pour trouver les lignes de conf à ajouter au `Vagrantfile` pour ça.
+ - [easiest-conf-vagrant](./easiest-conf-vagrant)
 
-> N'hésitez surtout pas à m'appeler si vous galérez avec ça, cherchez d'abord, mais ne galérez pas 10 plombes sur des soucis de syntaxe !
 
 # II. Initialization script
 
-Quand Vagrant allume une VM, il peut lui ordonner d'exécuter un script une fois le démarrage terminé.
-
-> On se rapproche donc d'un réel provisioning programmatique avec la création de la VM + une configuration élémentaire.
-
-Ici, on va rester simples : un ptit script shell qui installera quelques paquets.
-
 🌞 **Ajustez le `Vagrantfile`** :
 
-- quand la VM démarre, elle doit exécuter un script bash
-- le script installe les paquets `vim` et `python3`
-- il met aussi à jour le système avec un `dnf update -y` (si c'est trop long avec le réseau de l'école, zappez cette étape)
-- ça se fait avec une ligne comme celle-ci :
-
-```Vagrantfile
-# on suppose que "script.sh" existe juste à côté du Vagrantfile
-config.vm.provision "shell", path: "script.sh" 
-```
+> Vagrantfile and script [here](./init-script/)
 
 # III. Repackaging
 
-Pour accélérer le déploiement, mais aussi pour intégrer une conf dès le boot de la VM, on peut **repackager les boxes avec Vagrant.**
-
-C'est à dire qu'on peut créer un template de VM quoi : **on crée une image custom qui contient déjà la conf, et on a plus qu'à allumer des VMs à partir de cette image.**
-
-Une fois qu'une VM est allumée, qu'on y a fait un peu de conf, on peut à tout moment la transformer en un nouveau template (une nouvelle "box" au sens de Vagrant).
-Et on pourra donc créer de nouvelles VMs qui contiennent déjà cette conf.
-
-La marche à suivre pour faire ça est la suivante :
-
-```bash
-# toujours depuis le même répertoire, avec la VM allumée
-$ vagrant package --output rocky-efrei.box
-
-# on ajoute le fichier .box produit à la liste des box que gère Vagrant
-$ vagrant box add rocky-efrei rocky-efrei.box
-
-# la box est visible dans la liste des box Vagrant
-$ vagrant box list
-```
-
-> Vous l'avez compris une "box" c'est juste une VM qui est prête à être clonée. Il existe un répertoire public de box, où n'importe qui peut y mettre sa ptite box, c'est le [Vagrant Cloud](https://app.vagrantup.com/boxes/search).
-
 🌞 **Repackager la VM créée précédemment**
 
-- comme ça vous aurez une box qui contient un OS déjà à jour, avec quelques paquets préinstallés
-- donnez moi la suite de commande dans le compte-rendu de TP
+> Utilisation du Vagrantfile et du script contenu dans [init-script](./init-script/)
 
-> Cette idée d'utiliser un template pour provisionner des VM par la suite est extrêmement répandue. Utile par exemple pour avoir des machines qui sont conformes dès leur installation à une politique de sécurité.
+```bash
+vagrant package --output rocky-pkg.box
+
+vagrant box add rocky-pkg rocky-pkg.box
+
+dorian@Air-de-Dorian cloud % vagrant box list                                    
+bento/rockylinux-9-arm64 (vmware_desktop, 202401.31.0, (arm64))
+hashicorp/bionic64       (vmware_desktop, 1.0.282)
+rocky-pkg              (vmware_desktop, 0)
+```
 
 # IV. Multi VM
 
