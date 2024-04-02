@@ -26,9 +26,7 @@ Vagrant.configure("2") do |config|
 end
 ```
 
-> **Y'aura plusieurs Vagrantfile dans le TP**, alors hésitez pas à les renommer dans le rendu, faire des dossiers, toussa, clean quoi !
-
-![Vagrantfile](./basic-conf-vagrant)
+ - [basic-conf-vagrant](./basic-conf-vagrant)
 
 ## 2. Un peu de conf
 
@@ -160,14 +158,14 @@ Ici, dans le cadre du TP, vous allez :
 
 ➜ **Construire le `.iso` qui contient les données `cloud-init`**
 
-- première étape, créer un fichier texte nommé `user-data` avec le contenu suivant
+- première étape, créer un fichier texte nommé `meta-data` avec le contenu suivant
 
 ```yml
 ---
 local-hostname: cloud-init-test.tp1.efrei
 ```
 
-- ensuite, créer un fichier texte nommé `user-data` avec le contenu suivant
+- ensuite, créer un fichier texte nommé `meta-data` avec le contenu suivant
 
 ```yml
 ---
@@ -188,7 +186,7 @@ users:
 ```bash
 # rien à changer dans cette commande, à part le nom de l'iso de sortie si vous souhaitez
 # il faut OBLIGATOIREMENT laisser le volid à "cidata" : c'est grâce à ce tag que cloud-init reconnaît ce disque
-genisoimage -output cloud-init.iso -volid cidata -joliet -r meta-data user-data
+genisoimage -output cloud-init.iso -volid cidata -joliet -r meta-data meta-data
 ```
 
 ![No magic](./img/cloud-init.png)

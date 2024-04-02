@@ -1,0 +1,3 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/rockylinux-9-arm64"
+end
