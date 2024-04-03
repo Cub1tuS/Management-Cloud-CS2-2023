@@ -1,3 +1,2 @@
-dnf update
-dnf upgrade -y
+dnf update -y
 dnf install -y vim python3
