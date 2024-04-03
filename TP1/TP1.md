@@ -11,8 +11,6 @@
 - [IV. Multi VM](#iv-multi-vm)
 - [V. cloud-init](#v-cloud-init)
 
-
-
 # I. Une première VM
 
 ## 1. ez startup
@@ -136,19 +134,19 @@ Ici, dans le cadre du TP, vous allez :
   - comme une création d'utilisateurs
 - on pourra ensuite lancer une VM, qui se base sur cette box, et qui s'autoconfigurera toute seule au boot
 
+## 1. Repackaging
+
 🌞 **Repackager une box Vagrant**
 
 - cette box doit contenir le paquet `cloud-init` pré-installé
 - il faut aussi avoir saisi `systemctl enable cloud-init` après avoir l'instalaltion du paquet
   - cela permet à `cloud-init` de démarrer automatiquement au prochain boot de la machine
 
-🌞 **Tester !**
+## 2. Test
 
-- écrire un `Vagrantfile` qui utilise la box repackagée
-- il faudra ajouter un CD-ROM (un `.iso`) à la VM qui contient nos données `cloud-init`
-  - uiui un `.iso` c'est un CD-ROM virtuel, et ui c'est la méthode plutôt standard avec `cloud-init`
-  - référez-vous aux instructions juste en dessous pour savoir comment construire ce `.iso`
-- allumez la VM avec `vagrant up` et vérifiez que `cloud-init` a bien créé l'utilisateur, avec le bon password, et la bonne clé SSH
+⚠️⚠️⚠️ **SOIT** vous le faites avec le fichier `.iso` (certains ont eu des petits soucis) **SOIT** direct avec Vagrant, **ne faites pas les deux** **(soit le A soit le B)**.
+
+### A. Avec le fichier .iso
 
 ➜ **Construire le `.iso` qui contient les données `cloud-init`**
 
@@ -159,7 +157,7 @@ Ici, dans le cadre du TP, vous allez :
 local-hostname: cloud-init-test.tp1.efrei
 ```
 
-- ensuite, créer un fichier texte nommé `meta-data` avec le contenu suivant
+- ensuite, créer un fichier texte nommé `user-data` avec le contenu suivant
 
 ```yml
 ---
@@ -175,12 +173,60 @@ users:
       - ssh-ed25519 AAAAC3NzaC1l3R4CNTE5AAAAIMO/JQ3AtA3k8iXJWlkdUKSHDh215OKyLR0vauzD7BgA # mettez votre propre clé
 ```
 
+> *Vous avez été pluseurs à me faire la remarque, non ce n'est pas une erreur les `---` au début du document, c'est une bonne pratique pour le début de n'importe quel fichier `.yml`.*
+
 - enfin, on peut générer le `.iso` à partir de ces deux fichiers avec la commande suivante
 
 ```bash
 # rien à changer dans cette commande, à part le nom de l'iso de sortie si vous souhaitez
 # il faut OBLIGATOIREMENT laisser le volid à "cidata" : c'est grâce à ce tag que cloud-init reconnaît ce disque
-genisoimage -output cloud-init.iso -volid cidata -joliet -r meta-data meta-data
+genisoimage -output cloud-init.iso -volid cidata -joliet -r meta-data user-data
 ```
+
+> Si la commande `genisoimage` est pas dispo au sein de votre OS, vous pouvez récupérer [mon fichier ISO](./cloud-init.iso) (le user c'est `lala` et le password `dbc`)
+
+🌞 **Tester !**
+
+- écrire un `Vagrantfile` qui utilise la box repackagée
+- il faudra ajouter un CD-ROM (un `.iso`) à la VM qui contient nos données `cloud-init`
+  - uiui un `.iso` c'est un CD-ROM virtuel, et ui c'est la méthode plutôt standard avec `cloud-init`
+  - référez-vous aux instructions juste en dessous pour savoir comment construire ce `.iso`
+- allumez la VM avec `vagrant up` et vérifiez que `cloud-init` a bien créé l'utilisateur, avec le bon password, et la bonne clé SSH
+
+### B. Directement avec Vagrant
+
+➜ **Vagrant supporte le fait de fournir à une VM une conf `cloud-init`** (concrètement, il va lui aussi monter la conf sous la forme d'un `.iso`, vous pouvez le voir dans l'interface de VirtualBox après un `vagrant up`.
+
+Ca peut se faire avec la ligne suivante dans un `Vagrantfile` :
+
+```ruby
+config.vm.cloud_init :user_data, content_type: "text/cloud-config", path: "user_data.yml"
+```
+
+Ce qui suppose la présence d'un fichier `user_data.yml` dans le même dossier que le Vagrantfile, avec un contenu comme :
+
+```yml
+---
+users:
+  - name: nom_de_ton_user
+    primary_group: nom_de_ton_groupe # pareil que le user généralement
+    groups: wheel # sur un système redhat, t'as full accès à sudo si t'es membre du groupe wheel
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL # on fait les forceurs sur sudo :D
+    lock_passwd: false
+    passwd: <HASH_DU_PASSWORD_MEME_FORMAT_QUE_/etc/shadow>
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1l3R4CNTE5AAAAIMO/JQ3AtA3k8iXJWlkdUKSHDh215OKyLR0vauzD7BgA # mettez votre propre clé
+```
+
+🌞 **Tester !**
+
+- écrire un `Vagrantfile` qui utilise la box repackagée
+- il faudra ajouter un CD-ROM (un `.iso`) à la VM qui contient nos données `cloud-init`
+  - uiui un `.iso` c'est un CD-ROM virtuel, et ui c'est la méthode plutôt standard avec `cloud-init`
+  - référez-vous aux instructions juste en dessous pour savoir comment construire ce `.iso`
+- allumez la VM avec `vagrant up` et vérifiez que `cloud-init` a bien créé l'utilisateur, avec le bon password, et la bonne clé SSH
+
+> *Vous avez été pluseurs à me faire la remarque, non ce n'est pas une erreur les `---` au début du document, c'est une bonne pratique pour le début de n'importe quel fichier `.yml`.*
 
 ![No magic](./img/cloud-init.png)
