@@ -54,13 +54,30 @@ Dans ce TP on va donc monter un serveur PXE, dans une VM, ce qui permettra aux a
 
 - il doit filer des IPs dans la bonne range
 - la conf doit aussi contenir une section spécifique pour PXE
-  - dans le bloc `subnet { }`, ajoutez la conf suivante :
-  - n'oubliez pas de remplacer `<IP_DU_SERVEUR_PXE>` par l'IP de votre VM
+- je vous mets un p'tit exemple ci-dessous (n'oubliez pas de remplacer les valeurs entre chevrons)
 
 ```conf
+default-lease-time 600;
+max-lease-time 7200;
+authoritative;
+
+# PXE specifics
+option space pxelinux;
+option pxelinux.magic code 208 = string;
+option pxelinux.configfile code 209 = text;
+option pxelinux.pathprefix code 210 = text;
+option pxelinux.reboottime code 211 = unsigned integer 32;
+option architecture-type code 93 = unsigned integer 16;
+
+subnet <NETWORK_ADDRESS> netmask 255.255.255.0 {
+    # définition de la range pour que votre DHCP attribue des IP entre <FIRST_IP> <LAST_IP>
+    range dynamic-bootp <FIRST_IP> <LAST_IP>;
+    
+    # add follows
     class "pxeclients" {
         match if substring (option vendor-class-identifier, 0, 9) = "PXEClient";
-        next-server <IP_DU_SERVEUR_PXE>;
+        next-server <PXE_SERVER_IP_ADDRESS>;
+
         if option architecture-type = 00:07 {
             filename "BOOTX64.EFI";
         }
@@ -68,6 +85,7 @@ Dans ce TP on va donc monter un serveur PXE, dans une VM, ce qui permettra aux a
             filename "pxelinux.0";
         }
     }
+}
 ```
 
 🌞 **Démarrer le serveur DHCP**
@@ -90,7 +108,7 @@ C'est vitefé.
 
 🌞 **Ouvrir le bon port firewall**
 
-- avec `sudo firewall-cmd --add-service=tftp --permanent` suivi de `sudo fireswall-cmd --reload`
+- avec `sudo firewall-cmd --add-service=tftp --permanent` suivi de `sudo firewall-cmd --reload`
 
 > *C'est du port 69 en TCP ou UDP le protocole TFTP.*
 
