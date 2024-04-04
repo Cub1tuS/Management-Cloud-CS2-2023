@@ -1,62 +1,27 @@
 # TP2 : Network boot
 
-**Dans ce TP on va voir une autre techno centrale dans les infras de grande taille comme typiquement les infras Cloud : PXE.**
-
-Soit y'a du PXE, soit y'a juste du clone de VM (c'est à dire : on duplique le disque dur virtuel).
-
-Mais bon, quand c'est pas des VMs et que c'est des serveurs physique, y'a pas de bouton clone hihi 🌻
-
-➜ **PXE est un protocole qui permet à une machine avec un disque dur vierge (sans OS installé) de démarrer, et de lancer une installation à travers le réseau.**
-
-Autrement dit, c'est possible de juste allumer un nouveau serveur physique ou une nouvelle VM, et sans aucune autre intervention manuelle (juste tu l'allumes), la VM est complètement configurée (OS installé, configuration élémentaire, etc.).
-
-Dans ce TP on va donc monter un serveur PXE, dans une VM, ce qui permettra aux autres VMs de démarrer une installation d'OS à travers le réseau.
-
-➜ **PXE repose lui sur d'autres protocoles assez standards :**
-
-- **DHCP** : avant de commencer une install réseau, la VM cliente va devoir récup une IP en DHCP
-- **TFTP et/ou HTTP** : le protocole qui sera utilisé pour télécharger les données depuis le serveur PXE
-
-➜ **Le flow typique de PXE, c'est donc :**
-
-- on allume une VM vierge (ou machine physique)
-- elle récup une IP en DHCP
-- grâce à des options DHCP, elle connaît à quelle IP faire les requêtes suivantes
-- elle fait une requête HTTP pour récup de quoi commencer une installation
-- l'installation démarre
-
-> *On peut aller plus loin, et automatiser aussi l'installation elle-même. Ca se fait avec Kickstart pour les systèmes RedHat par exemple. On va pas voir ça ensemble dans ce TP, mais c'est lâché si vous voulez aller voir ;)*
-
-![PXE](./img/pxe.jpg)
-
 ## Sommaire
 
 - [TP2 : Network boot](#tp2--network-boot)
   - [Sommaire](#sommaire)
-- [0. Setup](#0-setup)
 - [I. Installation d'un serveur DHCP](#i-installation-dun-serveur-dhcp)
 - [II. Installation d'un serveur TFTP](#ii-installation-dun-serveur-tftp)
 - [III. Un peu de conf](#iii-un-peu-de-conf)
 - [IV. Installation d'un serveur Apache](#iv-installation-dun-serveur-apache)
 - [V. Test](#v-test)
 
-# 0. Setup
-
-➜ Je vous conseille de pop la VM avec Vagrant, mais comme vous voulez en vrai !
-
-➜ Toujours sur Rocky Linux. Une seule VM où on installe tout.
-
 # I. Installation d'un serveur DHCP
 
 🌞 **Installer le paquet `dhcp-server`**
 
+```bash
+sudo dnf install dhcp-server
+```
+
 🌞 **Configurer le serveur DHCP**
 
-- il doit filer des IPs dans la bonne range
-- la conf doit aussi contenir une section spécifique pour PXE
-- je vous mets un p'tit exemple ci-dessous (n'oubliez pas de remplacer les valeurs entre chevrons)
-
 ```conf
+[root@rockypxe ~]# cat /etc/dhcp/dhcpd.conf 
 default-lease-time 600;
 max-lease-time 7200;
 authoritative;
@@ -69,14 +34,14 @@ option pxelinux.pathprefix code 210 = text;
 option pxelinux.reboottime code 211 = unsigned integer 32;
 option architecture-type code 93 = unsigned integer 16;
 
-subnet <NETWORK_ADDRESS> netmask 255.255.255.0 {
+subnet 10.1.1.0 netmask 255.255.255.0 {
     # définition de la range pour que votre DHCP attribue des IP entre <FIRST_IP> <LAST_IP>
-    range dynamic-bootp <FIRST_IP> <LAST_IP>;
+    range dynamic-bootp 10.1.1.10 10.1.1.20;
     
     # add follows
     class "pxeclients" {
         match if substring (option vendor-class-identifier, 0, 9) = "PXEClient";
-        next-server <PXE_SERVER_IP_ADDRESS>;
+        next-server 10.1.1.1;
 
         if option architecture-type = 00:07 {
             filename "BOOTX64.EFI";
@@ -90,39 +55,50 @@ subnet <NETWORK_ADDRESS> netmask 255.255.255.0 {
 
 🌞 **Démarrer le serveur DHCP**
 
+```bash
+systemctl restart dhcpd
+```
+
 🌞 **Ouvrir le bon port firewall**
 
-- avec `sudo firewall-cmd --add-service=dhcp --permanent` suivi de `sudo firewall-cmd --reload`
+```bash
+[root@rockypxe ~]# firewall-cmd --add-service=dhcp --permanent
+success
+```
+
+```bash
+[root@rockypxe ~]# firewall-cmd --reload
+success
+```
 
 # II. Installation d'un serveur TFTP
 
-Normalement c'est que pour du legacy, mais on le fait au cas où, suivant vos setups, i don't know.
-
-C'est vitefé.
-
 🌞 **Installer le paquet `tftp-server`**
+
+```bash
+[root@rockypxe ~]# dnf install -y tftp-server
+```
 
 🌞 **Démarrer le socket TFTP**
 
-- avec un `sudo systemctl enable --now tftp.socket`
+```bash
+[root@rockypxe ~]# systemctl enable --now tftp.socket
+Created symlink /etc/systemd/system/sockets.target.wants/tftp.socket → /usr/lib/systemd/system/tftp.socket.
+```
 
 🌞 **Ouvrir le bon port firewall**
 
-- avec `sudo firewall-cmd --add-service=tftp --permanent` suivi de `sudo firewall-cmd --reload`
+```bash
+[root@rockypxe ~]# firewall-cmd --add-service=tftp --permanent
+success
+```
 
-> *C'est du port 69 en TCP ou UDP le protocole TFTP.*
+```bash
+[root@rockypxe ~]# firewall-cmd --reload
+success
+```
 
 # III. Un peu de conf
-
-Dans cette section, on va récupérer certains fichier contenus dans l'ISO officiel de Rocky Linux, afin de permettre à d'autres machines de les récupérer afin de démarrer un boot sur le réseau.
-
-Avec PXE c'est le délire : on fournit un ISO à travers le réseau, et les machines peuvent l'utiliser pour déclencher une install.
-
-Let's go :
-
-➜ Déjà, récupérez l'iso de Rocky Linux dans la VM.
-
-➜ Ensuite, suivez le guide :
 
 ```bash
 # on installe les bails nécessaires à l'install d'un nouveao Rocky
