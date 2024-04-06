@@ -89,7 +89,7 @@ Created symlink /etc/systemd/system/sockets.target.wants/tftp.socket → /usr/li
 🌞 **Ouvrir le bon port firewall**
 
 ```bash
-[root@rockypxe ~]# firewall-cmd --add-service=tftp --permanent
+[root@rockypxe ~]# firewall-cmd dd-service=tftp --permanent
 success
 ```
 
@@ -112,7 +112,7 @@ mkdir -p /var/pxe/rocky9
 mkdir /var/lib/tftpboot/rocky9
 
 # adaptez avec le chemin vers l'iso de Rocky sur votre VM
-mount -t iso9660 -o loop,ro /path/vers/liso/de/rocky.iso /var/pxe/rocky9
+mount -t iso9660 -o loop,ro /root/Rocky-9.3-x86_64-minimal.iso /var/pxe/rocky9
 
 # on récupère dans l'iso de Rocky le nécessaire pour démarrer une install
 cp /var/pxe/rocky9/images/pxeboot/{vmlinuz,initrd.img} /var/lib/tftpboot/rocky9/
@@ -135,7 +135,7 @@ label linux
   menu label ^Install Rocky Linux 9 my big boiiiiiii
   menu default
   kernel rocky9/vmlinuz
-  append initrd=rocky9/initrd.img ip=dhcp inst.repo=http://<IP_DU_SERVEUR_PXE>/rocky9
+  append initrd=rocky9/initrd.img ip=dhcp inst.repo=http://10.1.1.1>/rocky9
 label rescue
   menu label ^Rescue installed system
   kernel rocky9/vmlinuz
@@ -149,6 +149,10 @@ label local
 
 🌞 **Installer le paquet `httpd`**
 
+```bash
+dnf install -y httpd
+```
+
 🌞 **Ajouter un fichier de conf dans `/etc/httpd/conf.d/pxeboot.conf`** avec le contenu suivant :
 
 ```apache
@@ -156,29 +160,36 @@ Alias /rocky9 /var/pxe/rocky9
 <Directory /var/pxe/rocky9>
     Options Indexes FollowSymLinks
     # access permission
-    Require ip 127.0.0.1 10.1.1.0/24 # remplace 10.1.1.0/24 par le réseau dans lequel se trouve le serveur
+    Require ip 127.0.0.1 10.1.1.0/24
+    #j'ai le même réseau que l'exemple
 </Directory>
 ```
 
 🌞 **Démarrer le serveur Apache**
 
+```bash
+systemctl enable httpd.service
+systemctl start httpd.service
+```
+
 🌞 **Ouvrir le bon port firewall**
 
-- avec `sudo firewall-cmd --add-port=80/tcp --permanent` suivi de `sudo fireswall-cmd --reload`
+```bash
+[root@rockypxe ~]# firewall-cmd --add-port=80/tcp --permanent
+success
+[root@rockypxe ~]# firewall-cmd --reload
+success
+```
 
 # V. Test
 
-Pour tester, simple :
-
-- vous ouvrez VirtualBox à la main
-- vous créez une nouvelle VM
-  - pas un clone
-  - vous lui mettez pas d'ISO ni rien non plus
-  - genre une machine avec un disque vierge
-- il faut qu'elle ait une interface dans le même réseau host-only que votre serveur PXE pour pouvoir le contacter
-- vous allumez la VM
-- une install de Rocky est censée se lancer
-
 🌞 **Analyser l'échange complet avec Wireshark**
 
-- le mieux pour réaliser la capture est sûrement d'utiliser `tcpdump` depuis le serveur PXE
+```bash
+dnf install tcpdump
+```
+
+- Avant de lancer le client, on démarre un tcpdump sur le serveur PXE (directement sur la machine ou Wireshark sshdump)
+- En premier lieu, il y a le processus DORA entre le serveur DHCP et le client.
+- Ensuite le client télécharge l'ISO stocké sur le serveur PXE via TFTP.
+- Par la suite, le client charge l'iso en ram pour démarrer l'installation.
