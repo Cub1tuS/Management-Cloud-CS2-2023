@@ -78,6 +78,6 @@ success
 [oneadmin@rocky9 ~]$ ssh-keyscan 10.3.1.156
 ```
 
-## C. Ajout des noeuds au cluste
+## C. Ajout des noeuds au cluster
 
 ![proof](proof%20on.png)
