@@ -168,7 +168,7 @@ Récupérez l'image de Rocky Linux 9 dans cette interface.
 
 ```bash
 # connectez vous en SSH sur la machine frontend.one
-❯ vagrant ssh frontend
+❯ 1
 
 # devenez l'utilisateur oneadmin
 [vagrant@frontend ~]$ sudo su - oneadmin
@@ -181,10 +181,10 @@ Récupérez l'image de Rocky Linux 9 dans cette interface.
 Identity added: /var/lib/one/.ssh/id_rsa (oneadmin@frontend)
 
 # se connecter à kvm1 en faisant suivre l'agent SSH
-[oneadmin@frontend ~]$ ssh -A 10.231.231.21
+[oneadmin@frontend ~]$ ssh -A 10.3.1.156
 
 # depuis kvm1, se connecter à la VM, sur l'utilisateur root
-[oneadmin@kvm1 ~]$ ssh root@10.220.220.1
+[oneadmin@kvm1 ~]$ ssh root@10.220.220.5
 
 # on est co dans la VM
 [root@localhost ~]# 
@@ -195,7 +195,7 @@ Identity added: /var/lib/one/.ssh/id_rsa (oneadmin@frontend)
 - vous pouvez éventuellement ajouter l'IP de la machine hôte comme route par défaut pour avoir internet (l'IP du bridge VXLAN de l'hôte) :
 
 ```bash
-[root@localhost ~]# ip route add default via 10.220.220.201
+[root@localhost ~]# ip route add default via 10.220.220.201 # ip de kvm1 sur le vxlan
 [root@localhost ~]# ping 1.1.1.1
 ```
 
@@ -207,6 +207,18 @@ Identity added: /var/lib/one/.ssh/id_rsa (oneadmin@frontend)
 
 🌞 **Setup de `kvm2.one`, à l'identique de `kvm1.one`** excepté :
 
+```bash
+[root@kvm2 vagrant]# ip link add name vxlan_bridge type bridge
+[root@kvm2 vagrant]# ip link set dev vxlan_bridge up 
+[root@kvm2 vagrant]# ip addr add 10.220.220.202/24 dev vxlan_bridge
+[root@kvm2 vagrant]# firewall-cmd --add-interface=vxlan_bridge --zone=public --permanent
+success
+[root@kvm2 vagrant]# firewall-cmd --add-masquerade --permanent
+success
+[root@kvm2 vagrant]# firewall-cmd --reload
+success
+```
+
 - une autre IP statique bien sûr
 - idem, pour le bridge, donnez-lui l'IP `10.220.220.202/24` (celle qui est juste après l'IP du bridge de `kvm1`)
 - une fois setup, ajoutez le dans la WebUI, dans `Infrastructure > Hosts`
@@ -215,13 +227,33 @@ Identity added: /var/lib/one/.ssh/id_rsa (oneadmin@frontend)
 
 🌞 **Lancer une deuxième VM**
 
-- vous pouvez la forcer à tourner sur `kvm2.one` lors de sa création
-- mettez la dans le même réseau que le premier `kvm1.one`
-- assurez-vous que vous pouvez vous y connecter en SSH
+```bash
+[vagrant@kvm2 ~]$ ping 10.220.220.6
+PING 10.220.220.6 (10.220.220.6) 56(84) bytes of data.
+64 bytes from 10.220.220.6: icmp_seq=1 ttl=64 time=1.63 ms
+64 bytes from 10.220.220.6: icmp_seq=2 ttl=64 time=0.267 ms
+```
+
+```bash
+[oneadmin@kvm2 ~]$ ssh root@10.220.220.6
+Warning: Permanently added '10.220.220.6' (ED25519) to the list of known hosts.
+[root@localhost ~]# 
+```
 
 ## 3. Connectivité entre les VMs
 
 🌞 **Les deux VMs doivent pouvoir se ping**
+
+```baship
+[root@localhost ~]# ping 10.220.220.5
+PING 10.220.220.5 (10.220.220.5) 56(84) bytes of data.
+64 bytes from 10.220.220.5: icmp_seq=1 ttl=64 time=2.48 ms
+64 bytes from 10.220.220.5: icmp_seq=2 ttl=64 time=1.50 ms
+^C
+--- 10.220.220.5 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1002ms
+rtt min/avg/max/mdev = 1.500/1.991/2.483/0.491 ms
+```
 
 - alors qu'elles sont sur des hyperviseurs différents, elles se ping comme si elles étaient dans le même réseau local !
 
@@ -229,15 +261,8 @@ Identity added: /var/lib/one/.ssh/id_rsa (oneadmin@frontend)
 
 🌞 **Téléchargez `tcpdump` sur l'un des noeuds KVM**
 
-- effectuez deux captures, pendant que les VMs sont en train de se ping :
-  - **une qui capture le trafic de l'interface réelle** : `eth1` probablement (celle qui a l'IP host-only, celle qui porte `10.3.1.22` sur `kvm2` par exemple)
-  - **une autre qui capture le trafic de l'interface bridge VXLAN**
-    - on l'a appelée `vxlan-bridge` dans le TP
-- petit rappel d'une commande `tcpdump` :
-
 ```bash
-# capturer le trafic de eth1, et l'enregistrer dans un fichier yo.pcap
-tcpdump -i eth1 -w yo.pcap
+[vagrant@kvm1 ~]$ sudo dnf install -y tcpdump
 ```
 
 ➜ **Analysez les deux captures**
@@ -245,3 +270,11 @@ tcpdump -i eth1 -w yo.pcap
 - dans la capture de `eth1` vous devriez juste voir du trafic UDP entre les deux noeuds
   - si vous regardez bien, vous devriez que ce trafic UDP contient lui-même des trames
 - dans la capture de `vxlan-bridge`, vous devriez voir les "vraies" trames échangées par les deux VMs
+
+```bash
+sudo tcpdump -i vxlan_bridge -w vxlan_bridge.pcap
+```
+
+```bash
+sudo tcpdump -i eth1 -w eth1.pcap
+```
