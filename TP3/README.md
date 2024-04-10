@@ -81,7 +81,7 @@ Il y a une option dans les settings de VirtualBox pour chaque VM : `Nested VT-x/
 |----------------|-------------|------------------------------|
 | `frontend.one` | `10.3.1.250`| WebUI OpenNebula             |
 | `kvm1.one`     | `10.3.1.156`| Hyperviseur + Endpoint VXLAN |
-| `kvm2.one`     | `10.3.1.174` | Hyperviseur + Endpoint VXLAN |
+| `kvm2.one`     | `10.3.1.174`| Hyperviseur + Endpoint VXLAN |
 
 ## 2. Noeud Frontend
 
@@ -114,13 +114,13 @@ L'idée ici, dans le contexte du TP, c'est de préparer deux VMs avec l'hypervis
 
 Le noeud `frontend.one` va héberger la logique de l'application, et exposer la WebUI ainsi que l'API.
 
-➜ **J'ai fait [un doc dédié pour le setup du frontend](./frontend.md), déroulez-le en entier sur la machine `frontend.one` avant de continuer.**
+➜ **Voici [ma partie sur le setup du frontend](./frontend.md).**
 
 ## 2. Noeuds KVM
 
 Le noeud `kvm1.one` va héberger un hyperviseur KVM. Il sera contrôlé par `frontend.one` (à travers SSH).
 
-➜ **J'ai fait [un doc dédié pour le setup des noeuds KVM](./kvm.md), déroulez-le en entier, uniquement sur la machine `kvm1.one`, avant de continuer.**
+➜ **Voici [ma partie sur le setup des noeuds KVM](./kvm.md).**
 
 > *Même envisageable de repackage (avec Vagrant) un noeud KVM qui a été préparé, pour pouvoir pop des nouveaux noeuds KVM à volonté. On ferait ça dans la vie réelle pour pouvoir facilement ajuster la taille du cluster, avec la possibilité de pop très rapidement des nouveaux noeuds.*
 
@@ -128,7 +128,7 @@ Le noeud `kvm1.one` va héberger un hyperviseur KVM. Il sera contrôlé par `fro
 
 On va créer un réseau VXLAN pour que les VMs pourront utiliser pour communiquer.
 
-➜ **Pouif, là encore, j'ai fait [un doc dédié pour le setup du réseau](./network.md), déroulez-le en entier, avant de continuer.**
+➜ **Voici [ma partie sur le setup du réseau](./network.md).**
 
 - les commandes ne sont à effectuer que `kvm1.one`
 - le setup de `kvm2.one` ne viendra que dans la partie IV du TP

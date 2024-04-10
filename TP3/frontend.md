@@ -47,6 +47,10 @@ e2024-04-09T10:43:53.368117Z 6 [Note] [MY-010454] [Server] A temporary password 
 [...]
 ```
 
+```bash
+mysql -uroot -pAH1fUjfi0<9>
+```
+
 ```SQL
 ALTER USER 'root'@'localhost' IDENTIFIED BY 'Jefaisunstrongpassword123!';
 CREATE USER 'oneadmin' IDENTIFIED BY 'Jefaisunstrongpassword123!';
