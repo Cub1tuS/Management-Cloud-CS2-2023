@@ -60,7 +60,7 @@ SET GLOBAL TRANSACTION ISOLATION LEVEL READ COMMITTED;
 🌞 **Ajouter les dépôts Open Nebula**
 
 ```bash
-[vagrant@rocky9 yum.repos.d]$ nano opennebula.repo
+[vagrant@frontend yum.repos.d]$ nano opennebula.repo
 ```
 
 > J'ajoute le contenu suivant dans "opennebula.repo"
@@ -118,10 +118,10 @@ nano /var/lib/one/.one/one_auth
 - activez-les aussi au démarrage de la machine
 
 ```bash
-[vagrant@rocky9 one]$ sudo systemctl enable opennebula
-[vagrant@rocky9 one]$ sudo systemctl start opennebula
-[vagrant@rocky9 one]$ sudo systemctl enable opennebula-sunstone
-[vagrant@rocky9 one]$ sudo systemctl start opennebula-sunstone
+[vagrant@frontend]$ sudo systemctl enable opennebula
+[vagrant@frontend]$ sudo systemctl start opennebula
+[vagrant@frontend]$ sudo systemctl enable opennebula-sunstone
+[vagrant@frontend]$ sudo systemctl start opennebula-sunstone
 ```
 
 ## C. Conf système

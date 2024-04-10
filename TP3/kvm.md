@@ -13,7 +13,7 @@
 🌞 **Ajouter des dépôts supplémentaires**
 
 ```bash
-[vagrant@rocky9 yum.repos.d]$ nano opennebula.repo
+[vagrant@kvm1 yum.repos.d]$ nano opennebula.repo
 ```
 
 > J'ajoute le contenu suivant dans "opennebula.repo"
@@ -41,8 +41,8 @@ dnf install opennebula-node-kvm
 🌞 **Démarrer le service `libvirtd`**
 
 ```bash
-[vagrant@rocky9 ~]$ sudo systemctl start libvirtd
-[vagrant@rocky9 ~]$ sudo systemctl enable libvirtd
+[vagrant@frontend ~]$ sudo systemctl start libvirtd
+[vagrant@frontend ~]$ sudo systemctl enable libvirtd
 ```
 
 
@@ -51,11 +51,11 @@ dnf install opennebula-node-kvm
 🌞 **Ouverture firewall**
 
 ```bash
-[vagrant@rocky9 ~]$ sudo firewall-cmd --permanent --add-port=22/tcp
+[vagrant@kvm1 ~]$ sudo firewall-cmd --permanent --add-port=22/tcp
 success
-[vagrant@rocky9 ~]$ sudo firewall-cmd --permanent --add-port=8472/udp
+[vagrant@kvm1 ~]$ sudo firewall-cmd --permanent --add-port=8472/udp
 success
-[vagrant@rocky9 ~]$ sudo firewall-cmd --reload
+[vagrant@kvm1 ~]$ sudo firewall-cmd --reload
 success
 ```
 
@@ -68,14 +68,18 @@ success
 
 
 ```bash
-[oneadmin@rocky9 ~]$ ssh-keygen -t rsa -b 4096
+[oneadmin@frontend ~]$ ssh-keygen -t rsa -b 4096
+```
+
+```bash
+sed -i 's/127.0.0.1 rocky9.localdomain/10.3.1.250 rocky9.localdomain/g' /etc/hosts
 ```
 
 ***MANUALLY ADD PUB KEY FROM FRONTEND ON KVM NODES***
 
 ```bash
-[oneadmin@rocky9 ~]$ ssh-keyscan 10.3.1.174
-[oneadmin@rocky9 ~]$ ssh-keyscan 10.3.1.156
+[oneadmin@frontend ~]$ ssh-keyscan 10.3.1.250 10.3.1.174 10.3.1.156 rocky9.localdomain > known_hosts
+[oneadmin@kvm1 ~]$ ssh-keyscan 10.3.1.250 10.3.1.174 10.3.1.156 rocky9.localdomain > known_hosts
 ```
 
 ## C. Ajout des noeuds au cluster
