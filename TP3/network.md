@@ -66,3 +66,17 @@ firewall-cmd --add-masquerade --permanent
 # on reload le firewall pour que les deux commandes précédentes prennent effet
 firewall-cmd --reload
 ```
+
+```bash
+[vagrant@kvm1 ~]$ sudo ip link add name vxlan_bridge type bridge
+RTNETLINK answers: File exists
+[vagrant@kvm1 ~]$ sudo ip link set dev vxlan_bridge up 
+[vagrant@kvm1 ~]$ sudo ip addr add 10.220.220.201/24 dev vxlan_bridge
+[vagrant@kvm1 ~]$ sudo firewall-cmd --add-interface=vxlan_bridge --zone=public --permanent
+Warning: ALREADY_ENABLED: vxlan_bridge
+success
+[vagrant@kvm1 ~]$ sudo firewall-cmd --add-masquerade --permanent
+Warning: ALREADY_ENABLED: masquerade
+success
+[vagrant@kvm1 ~]$ sudo firewall-cmd --reload
+success
